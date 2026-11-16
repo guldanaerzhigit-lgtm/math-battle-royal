@@ -74,7 +74,7 @@ function App(){
  async function move(dx,dy){
   if(!me?.alive||room?.status!=="playing")return;
   const x=Math.max(4,Math.min(94,(me.x??50)+dx)),y=Math.max(8,Math.min(88,(me.y??50)+dy));
-  if(firebaseReady)await updateDoc(doc(db,"rooms",roomCode),{[`players.${uid}.x`]:x,[`players.${uid}.y`]:y});
+  if(onlineRoom)await updateDoc(doc(db,"rooms",roomCode),{[`players.${uid}.x`]:x,[`players.${uid}.y`]:y});
   else setRoom(r=>({...r,players:{...r.players,[uid]:{...r.players[uid],x,y}}}));
  }
  useEffect(()=>{
