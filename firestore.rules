@@ -58,6 +58,16 @@ service cloud.firestore {
     allow read, create, update, delete: if teacher(t);
    }
   }
+  match /tournaments/{tournamentId} {
+   allow read: if signedIn();
+   allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid && request.resource.data.code == tournamentId && request.resource.data.roomCode is string && request.resource.data.joinCode is string;
+   allow update, delete: if signedIn() && resource.data.hostUid == request.auth.uid;
+   match /participants/{classCode} {
+    allow read: if classTeacher(classCode) || classMember(classCode) || (signedIn() && get(/databases/$(database)/documents/tournaments/$(tournamentId)).data.hostUid == request.auth.uid);
+    allow create: if classTeacher(classCode) && request.resource.data.teacherUid == request.auth.uid && request.resource.data.classCode == classCode;
+    allow update, delete: if classTeacher(classCode) || (signedIn() && get(/databases/$(database)/documents/tournaments/$(tournamentId)).data.hostUid == request.auth.uid);
+   }
+  }
   match /rooms/{roomId} {
    allow read: if signedIn();
    allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid && request.resource.data.maxPlayers <= 30;
