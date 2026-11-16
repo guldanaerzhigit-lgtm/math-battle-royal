@@ -62,3 +62,17 @@ npm run preview
 ## Важное ограничение безопасности
 
 Эта версия — полноценный игровой MVP, но не защищённая турнирная платформа. Клиентская часть пока обновляет часть состояния матча через Firestore. Для соревнований с призами или публичного турнира необходимо перенести проверку ответов, начисление очков, урон, таймер и решение о победителе на доверенный сервер (например, Cloud Functions или Cloudflare Workers/Durable Objects), а также ужесточить Firestore Security Rules.
+
+## Teacher Studio: question bank and individual practice
+
+Open the teacher dashboard at `/?teacher=1`. Select a class and use the **Оқу құралдары** panel:
+- **Сұрақтар банкі** — create multiple-choice questions with a topic, difficulty, hint, simplified version, visual hint and step-by-step solution.
+- **Excel/CSV import** — import `.xlsx`, `.xls` or `.csv` files. The dashboard provides an Excel template. One row is one question; use the columns `Сұрақ, A, B, C, D, Дұрыс жауап, Тақырып, Шешімі, Подсказка, Жеңілдетілген сұрақ, Визуалды ишара, Деңгей`. The correct answer may be A–D or 1–4.
+- **Үй тапсырмасы** — select questions, set a deadline, and choose adaptive difficulty, hints, solutions, simplified wording, visual hints and extra time.
+- **Тарих және есеп** — review homework attempts and class tournament rooms, then export an Excel report.
+
+Students open `/?student=1`, join with the six-character class code, and complete assigned work individually. Practice assignments do not add students to a class leaderboard. Adaptive mode adjusts the next question level based on the previous answer and the result screen recommends other assignments covering weak topics.
+
+### Firestore rules deployment
+
+After updating the repository, publish the rules from `firestore.rules` in Firebase Console → Firestore Database → Rules. The new question bank, assignments and attempt records require these rules. The application build does not publish Firestore rules automatically.
