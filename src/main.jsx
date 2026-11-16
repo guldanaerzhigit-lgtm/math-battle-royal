@@ -25,9 +25,11 @@ function App(){
  const[name,setName]=useState("Ойыншы"),[mode,setMode]=useState("solo"),[code,setCode]=useState(""),[roomCode,setRoomCode]=useState(""),[room,setRoom]=useState(null);
  const[round,setRound]=useState(0),[answer,setAnswer]=useState(false),[msg,setMsg]=useState(""),[seconds,setSeconds]=useState(25),[busy,setBusy]=useState(false);
  useEffect(()=>{if(firebaseReady){signInAnonymously(auth).catch(console.error);return onAuthStateChanged(auth,u=>u&&setUid(u.uid));}},[]);
- useEffect(()=>{if(!roomCode||!firebaseReady)return onSnapshot(doc(db,"rooms",roomCode),s=>setRoom(s.exists()?s.data():null));},[roomCode]);
+ useEffect(()=>{if(!roomCode||!firebaseReady||roomCode==="DEMO")return onSnapshot(doc(db,"rooms",roomCode),s=>setRoom(s.exists()?s.data():null));},[roomCode]);
  const players=useMemo(()=>Object.values(room?.players||{}),[room]);
+ const onlineRoom=firebaseReady&&roomCode!=="DEMO";
  const me=room?.players?.[uid],alive=players.filter(p=>p.alive),q=room?.question,isHost=room?.hostUid===uid;
+ useEffect(()=>{if(room?.round!==undefined)setRound(room.round);},[room?.round]);
  useEffect(()=>{if(room?.status!=="playing")return;const started=room.roundStartedAt||Date.now();const tick=()=>setSeconds(Math.max(0,25-Math.floor((Date.now()-started)/1000)));tick();const t=setInterval(tick,250);return()=>clearInterval(t);},[room?.round,room?.status,room?.roundStartedAt]);
  useEffect(()=>{if(room?.status!=="playing"||!isHost||alive.length>1)return;updateDoc(doc(db,"rooms",roomCode),{status:"finished",championUid:alive[0]?.uid||null}).catch(console.error);},[room?.status,roomCode,isHost,alive.length]);
  async function create(){
@@ -50,7 +52,7 @@ function App(){
  async function startRound(nextRound=round){
   const item=bank[nextRound%bank.length],question={text:item[0],a:item[1],opts:item[2],topic:item[3]};
   const payload={status:"playing",round:nextRound,question,roundStartedAt:Date.now()};
-  if(firebaseReady)await updateDoc(doc(db,"rooms",roomCode),payload);
+  if(onlineRoom)await updateDoc(doc(db,"rooms",roomCode),payload);
   else setRoom(r=>({...r,...payload}));
   setRound(nextRound);setAnswer(false);setMsg("");
  }
