@@ -297,6 +297,7 @@ export function StudentAssignments({ joinCode, uid, studentName }) {
   const dueExpired=a=>a.dueAt&&new Date(a.dueAt).getTime()<Date.now();
   const available=assignments.filter(a=>!dueExpired(a));
   const weakTopics=summary?.incorrectTopics||[];
+  const recommendations=assignments.filter(a=>a.id!==active?.id&&(a.questions||[]).some(q=>weakTopics.includes(q.topic))).slice(0,3);
 
   function start(a){
     if(!a.questions?.length){setError("Бұл тапсырмада сұрақтар жоқ.");return;}
@@ -365,6 +366,7 @@ export function StudentAssignments({ joinCode, uid, studentName }) {
   if(active&&complete)return <section className="student-assignment-player student-assignment-result">
     <div className="student-result-icon">✓</div><small>ЖЕКЕ ЖАТТЫҒУ АЯҚТАЛДЫ</small><h2>{active.title}</h2><div className="student-result-score">{summary?.percent||0}%</div><p>{summary?.correctCount||0} / {summary?.total||0} дұрыс жауап</p>
     {weakTopics.length>0&&<div className="student-result-recommendation"><b>Қайталауға ұсынылатын тақырыптар</b><p>{weakTopics.join(", ")}</p><small>Келесі жаттығуда осы тақырыптарға назар аударыңыз.</small></div>}
+    {recommendations.length>0&&<div className="student-result-recommendation"><b>Сіздің келесі қадамдарыңыз</b>{recommendations.map(a=><button key={a.id} className="student-recommendation-button" onClick={()=>start(a)}>{a.title} →</button>)}</div>}
     <button className="teacher-tool-primary" onClick={()=>{setActive(null);setComplete(false);}}>Тапсырмалар тізіміне оралу</button>
   </section>;
 
