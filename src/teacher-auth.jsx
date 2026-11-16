@@ -32,11 +32,19 @@ export default function TeacherAccess(){
     await reload(user);
     if(!live)return;
     if(!user.emailVerified){setProfile({status:"unverified"});return;}
+    const a=await getDoc(doc(db,"admins",user.uid));
+    if(a.exists()){
+     const p=await getDoc(doc(db,"teacherProfiles",user.uid));
+     if(!p.exists()){
+      await setDoc(doc(db,"teacherProfiles",user.uid),{uid:user.uid,email:user.email,name:user.displayName||"Әкімші",role:"admin",status:"active",createdAt:serverTimestamp()});
+     }
+     if(live){setIsAdmin(true);setProfile(p.exists()?p.data():{role:"admin",status:"active"});}
+     return;
+    }
     const p=await getDoc(doc(db,"teacherProfiles",user.uid));
     if(p.exists()){if(live)setProfile(p.data());}
     else if(live)setProfile({status:"not-invited"});
-    const a=await getDoc(doc(db,"admins",user.uid));
-    if(live)setIsAdmin(a.exists());
+    if(live)setIsAdmin(false);
    }catch(e){if(live)setError("Профильді тексеру қатесі: "+e.message);}
   }
   load();
