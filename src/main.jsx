@@ -60,7 +60,7 @@ function App(){
   if(answer||!q||!me?.alive||me.lastAnsweredRound===round)return;
   setAnswer(true);const ok=Number(v)===Number(q.a);
   setMsg(ok?"Дұрыс жауап! +100 ұпай":"Қате жауап. Бір өмір жоғалттыңыз.");
-  if(firebaseReady){
+  if(onlineRoom){
    await runTransaction(db,async tx=>{const ref=doc(db,"rooms",roomCode),s=await tx.get(ref);if(!s.exists())return;
     const r=s.data(),p=r.players?.[uid];if(!p||!p.alive||p.lastAnsweredRound===r.round)return;
     const health=Math.max(0,p.health-(ok?0:1));
@@ -83,7 +83,7 @@ function App(){
  },[me?.x,me?.y,me?.alive,room?.status,roomCode]);
  async function finishRound(){
   if(!isHost)return;
-  if(firebaseReady){
+  if(onlineRoom){
    await runTransaction(db,async tx=>{const ref=doc(db,"rooms",roomCode),s=await tx.get(ref);if(!s.exists()||s.data().round!==round)return;
     const r=s.data(),ps={...r.players};Object.keys(ps).forEach(id=>{const p=ps[id];if(p.alive&&p.lastAnsweredRound!==round){const h=Math.max(0,p.health-1);ps[id]={...p,health:h,alive:h>0};}});
     const survivors=Object.values(ps).filter(p=>p.alive);
