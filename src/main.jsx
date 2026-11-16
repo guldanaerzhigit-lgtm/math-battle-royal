@@ -31,7 +31,7 @@ function App(){
  const me=room?.players?.[uid],alive=players.filter(p=>p.alive),q=room?.question,isHost=room?.hostUid===uid;
  useEffect(()=>{if(room?.round!==undefined)setRound(room.round);},[room?.round]);
  useEffect(()=>{if(room?.status!=="playing")return;const started=room.roundStartedAt||Date.now();const tick=()=>setSeconds(Math.max(0,25-Math.floor((Date.now()-started)/1000)));tick();const t=setInterval(tick,250);return()=>clearInterval(t);},[room?.round,room?.status,room?.roundStartedAt]);
- useEffect(()=>{if(room?.status!=="playing"||!isHost||alive.length>1)return;updateDoc(doc(db,"rooms",roomCode),{status:"finished",championUid:alive[0]?.uid||null}).catch(console.error);},[room?.status,roomCode,isHost,alive.length]);
+ useEffect(()=>{if(room?.status!=="playing"||!isHost||alive.length>1||!onlineRoom)return;updateDoc(doc(db,"rooms",roomCode),{status:"finished",championUid:alive[0]?.uid||null}).catch(console.error);},[room?.status,roomCode,isHost,alive.length]);
  async function create(){
   if(!firebaseReady){setMsg("Firebase кілттерін .env файлына енгізіңіз. Демо режимін қолданыңыз.");return;}
   setBusy(true);try{const c=codegen(),p=makePlayer(uid,name,mode==="team"?"blue":null,0);
