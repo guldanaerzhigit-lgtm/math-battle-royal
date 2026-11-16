@@ -106,7 +106,10 @@ export function TeacherLearningHub({ uid, selected, students=[] }) {
   const average=attempts.length?Math.round(attempts.reduce((n,a)=>n+(a.percent||0),0)/attempts.length):0;
   const weakTopics=useMemo(()=>{
     const map={};
-    attempts.forEach(a=>(a.incorrectTopics||[]).forEach(topic=>{map[topic]=(map[topic]||0)+1;}));
+    attempts.forEach(a=>{
+      const wrong=Array.isArray(a.answers)?a.answers.filter(x=>!x.correct).map(x=>x.topic):a.incorrectTopics||[];
+      wrong.forEach(topic=>{map[topic]=(map[topic]||0)+1;});
+    });
     return Object.entries(map).sort((a,b)=>b[1]-a[1]);
   },[attempts]);
 
@@ -174,16 +177,20 @@ export function TeacherLearningHub({ uid, selected, students=[] }) {
     if(!selected)return;setBusy(true);fail("");
     try{
       const attemptRows=[["Тапсырма","Оқушы","Дұрыс жауап","Барлық сұрақ","Пайыз","Қате тақырыптар","Уақыты"]];
+      const allTopicErrors={};
       for(const assignment of assignments){
         const snap=await getDocs(collection(db,"classPublic",selected.joinCode,"assignments",assignment.id,"attempts"));
         snap.docs.forEach(d=>{
           const a=d.data();
-          attemptRows.push([assignment.title,a.studentName||"",a.correctCount||0,a.total||0,a.percent||0,(a.incorrectTopics||[]).join(", "),a.completedAt?.toDate?.().toLocaleString?.()||""]);
+          const incorrect=Array.isArray(a.answers)?a.answers.filter(x=>!x.correct).map(x=>x.topic):a.incorrectTopics||[];
+          incorrect.forEach(topic=>{allTopicErrors[topic]=(allTopicErrors[topic]||0)+1;});
+          const completed=a.completedAt&&typeof a.completedAt.toDate==="function"?a.completedAt.toDate().toLocaleString():"";
+          attemptRows.push([assignment.title,a.studentName||"",a.correctCount||0,a.total||0,a.percent||0,incorrect.join(", "),completed]);
         });
       }
       const tournamentRows=[["Бөлме","Күйі","Раунд","Оқушы","Ұпай","Тірі қалды"]];
       rooms.forEach(room=>Object.values(room.players||{}).forEach(p=>tournamentRows.push([room.code||room.id,room.status,room.round??"",p.name||"",p.score||0,p.alive?"Иә":"Жоқ"])));
-      const topicRows=[["Тақырып","Қате жауап саны"],...weakTopics.map(([topic,count])=>[topic,count])];
+      const topicRows=[["Тақырып","Қате жауап саны"],...Object.entries(allTopicErrors).sort((a,b)=>b[1]-a[1]).map(([topic,count])=>[topic,count])];
       const book=utils.book_new();
       utils.book_append_sheet(book,utils.aoa_to_sheet(attemptRows),"Жаттығулар");
       utils.book_append_sheet(book,utils.aoa_to_sheet(topicRows),"Қиын тақырыптар");
