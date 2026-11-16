@@ -138,7 +138,6 @@ export default function TeacherDashboard() {
       </div>
       <TeacherLearningHub uid={uid} selected={selected} students={students}/>
       {(message||error)&&<div className={error?"teacher-message error":"teacher-message"}>{error||message}</div>}
-      <div className="teacher-footnote">Деректер Firebase Firestore-та сақталады. Мұғалім аккаунты жеке email/Google профиліне байланған.</div>
     </main>
   </div>;
 }
