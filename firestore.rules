@@ -12,12 +12,25 @@ service cloud.firestore {
    allow read: if signedIn();
    allow create, update: if signedIn() && request.resource.data.teacherUid == request.auth.uid;
    allow delete: if signedIn() && resource.data.teacherUid == request.auth.uid;
+   match /assignments/{assignmentId} {
+    allow read: if signedIn();
+    allow create, update: if signedIn() && request.resource.data.teacherUid == request.auth.uid;
+    allow delete: if signedIn() && resource.data.teacherUid == request.auth.uid;
+    match /attempts/{attemptId} {
+     allow create: if signedIn() && request.resource.data.studentUid == request.auth.uid;
+     allow read: if signedIn() && (resource.data.studentUid == request.auth.uid || resource.data.teacherUid == request.auth.uid);
+     allow update, delete: if signedIn() && resource.data.studentUid == request.auth.uid;
+    }
+   }
   }
   match /teachers/{t}/classes/{c} {
    allow read, create, update, delete: if teacher(t);
    match /students/{s} {
     allow read, update, delete: if teacher(t);
     allow create: if teacher(t) || (signedIn() && request.auth.uid == s && request.resource.data.joinCode is string && get(/databases/$(database)/documents/classCodes/$(request.resource.data.joinCode)).data.teacherUid == t && get(/databases/$(database)/documents/classCodes/$(request.resource.data.joinCode)).data.classId == c);
+   }
+   match /questions/{questionId} {
+    allow read, create, update, delete: if teacher(t);
    }
   }
   match /rooms/{roomId} {
