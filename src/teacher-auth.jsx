@@ -34,11 +34,7 @@ export default function TeacherAccess(){
     if(!user.emailVerified){setProfile({status:"unverified"});return;}
     const a=await getDoc(doc(db,"admins",user.uid));
     if(a.exists()){
-     const p=await getDoc(doc(db,"teacherProfiles",user.uid));
-     if(!p.exists()){
-      await setDoc(doc(db,"teacherProfiles",user.uid),{uid:user.uid,email:user.email,name:user.displayName||"Әкімші",role:"admin",status:"active",createdAt:serverTimestamp()});
-     }
-     if(live){setIsAdmin(true);setProfile(p.exists()?p.data():{role:"admin",status:"active"});}
+     if(live){setIsAdmin(true);setProfile({uid:user.uid,email:user.email,name:user.displayName||"Әкімші",role:"admin",status:"active"});}
      return;
     }
     const p=await getDoc(doc(db,"teacherProfiles",user.uid));
