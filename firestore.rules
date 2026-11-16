@@ -3,6 +3,8 @@ service cloud.firestore {
  match /databases/{database}/documents {
   function signedIn(){return request.auth != null;}
   function teacher(t){return signedIn() && request.auth.uid == t;}
+  function admin(){return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));}
+  function verified(){return signedIn() && request.auth.token.email_verified == true;}
   function classTeacher(code){
    let codePath = /databases/$(database)/documents/classCodes/$(code);
    return signedIn() && exists(codePath) && get(codePath).data.teacherUid == request.auth.uid;
@@ -10,6 +12,21 @@ service cloud.firestore {
   function classMember(code){
    let codePath = /databases/$(database)/documents/classCodes/$(code);
    return signedIn() && exists(codePath) && exists(/databases/$(database)/documents/teachers/$(get(codePath).data.teacherUid)/classes/$(get(codePath).data.classId)/students/$(request.auth.uid));
+  }
+  match /admins/{uid} {
+   allow read: if teacher(uid);
+   allow write: if false;
+  }
+  match /teacherInvites/{email} {
+   allow read: if admin() || (verified() && request.auth.token.email == email && resource.data.status == "pending");
+   allow create, update, delete: if admin();
+   allow update: if admin() || (verified() && request.auth.token.email == email && resource.data.status == "pending" && request.resource.data.status == "accepted" && request.resource.data.acceptedUid == request.auth.uid && request.resource.data.email == resource.data.email);
+  }
+  match /teacherProfiles/{uid} {
+   allow read: if teacher(uid) || admin();
+   allow create: if teacher(uid) && verified() && request.resource.data.uid == uid && request.resource.data.role == "teacher" && request.resource.data.status == "active" && exists(/databases/$(database)/documents/teacherInvites/$(request.resource.data.inviteEmail)) && get(/databases/$(database)/documents/teacherInvites/$(request.resource.data.inviteEmail)).data.status == "accepted" && get(/databases/$(database)/documents/teacherInvites/$(request.resource.data.inviteEmail)).data.acceptedUid == uid && request.auth.token.email == request.resource.data.email;
+   allow update: if admin() || (teacher(uid) && request.resource.data.uid == uid && request.resource.data.role == resource.data.role && request.resource.data.status == resource.data.status);
+   allow delete: if admin();
   }
   match /classCodes/{code} {
    allow read: if signedIn();
@@ -21,13 +38,11 @@ service cloud.firestore {
    allow create, update: if signedIn() && request.resource.data.teacherUid == request.auth.uid;
    allow delete: if signedIn() && resource.data.teacherUid == request.auth.uid;
    match /assignments/{assignmentId} {
-    // Collection queries must be authorized independently of each returned document.
     allow read: if classTeacher(code) || classMember(code);
     allow create, update: if signedIn() && request.resource.data.teacherUid == request.auth.uid;
     allow delete: if signedIn() && resource.data.teacherUid == request.auth.uid;
     match /attempts/{attemptId} {
      allow create: if signedIn() && request.resource.data.studentUid == request.auth.uid && classMember(code);
-     // Teachers can list all attempts for their own class; students can read only their own attempt.
      allow read: if classTeacher(code) || (signedIn() && resource.data.studentUid == request.auth.uid);
      allow update, delete: if signedIn() && resource.data.studentUid == request.auth.uid;
     }
