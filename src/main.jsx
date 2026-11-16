@@ -5,6 +5,7 @@ import { auth, db, firebaseReady, onAuthStateChanged, signInAnonymously } from "
 import { makeQuestion } from "./questions";
 import "./style.css";
 import TeacherDashboard, { StudentJoin } from "./teacher";
+import TeacherAccess from "./teacher-auth";
 
 const ROUND_SECONDS = 25;
 const MAX_PLAYERS = 30;
@@ -413,6 +414,6 @@ function App() {
 }
 const root = createRoot(document.getElementById("root"));
 const params=new URLSearchParams(window.location.search);
-if (window.location.pathname === "/teacher" || params.get("teacher") === "1") root.render(<TeacherDashboard />);
+if (window.location.pathname === "/teacher" || params.get("teacher") === "1") root.render(<TeacherAccess />);
 else if (params.get("student") === "1") root.render(<StudentJoin />);
 else root.render(<App />);
