@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, sendEmailVerification, signInWithEmailAndPassword, signInWithPopup, signOut, reload, sendPasswordResetEmail } from "firebase/auth";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, sendEmailVerification, signInWithEmailAndPassword, signInWithPopup, signOut, reload, sendPasswordResetEmail, updateProfile } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db, firebaseReady } from "./firebase";
 import TeacherDashboard from "./teacher";
@@ -63,7 +63,7 @@ export default function TeacherAccess(){
    if(mode==="register"){
     if(password.length<8)throw new Error("Құпиясөз кемінде 8 таңбадан тұруы керек.");
     const cred=await createUserWithEmailAndPassword(auth,emailKey(email),password);
-    if(fullName.trim())await cred.user.updateProfile?.({displayName:fullName.trim()});
+    if(fullName.trim())await updateProfile(cred.user,{displayName:fullName.trim()});
     await sendEmailVerification(cred.user);
     await signOut(auth);
     setMode("login");
