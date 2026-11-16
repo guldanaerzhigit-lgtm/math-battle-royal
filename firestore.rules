@@ -3,6 +3,10 @@ service cloud.firestore {
  match /databases/{database}/documents {
   function signedIn(){return request.auth != null;}
   function teacher(t){return signedIn() && request.auth.uid == t;}
+  function classTeacher(code){
+   let codePath = /databases/$(database)/documents/classCodes/$(code);
+   return signedIn() && exists(codePath) && get(codePath).data.teacherUid == request.auth.uid;
+  }
   function classMember(code){
    let codePath = /databases/$(database)/documents/classCodes/$(code);
    return signedIn() && exists(codePath) && exists(/databases/$(database)/documents/teachers/$(get(codePath).data.teacherUid)/classes/$(get(codePath).data.classId)/students/$(request.auth.uid));
@@ -17,12 +21,14 @@ service cloud.firestore {
    allow create, update: if signedIn() && request.resource.data.teacherUid == request.auth.uid;
    allow delete: if signedIn() && resource.data.teacherUid == request.auth.uid;
    match /assignments/{assignmentId} {
-    allow read: if signedIn() && (resource.data.teacherUid == request.auth.uid || classMember(code));
+    // Collection queries must be authorized independently of each returned document.
+    allow read: if classTeacher(code) || classMember(code);
     allow create, update: if signedIn() && request.resource.data.teacherUid == request.auth.uid;
     allow delete: if signedIn() && resource.data.teacherUid == request.auth.uid;
     match /attempts/{attemptId} {
      allow create: if signedIn() && request.resource.data.studentUid == request.auth.uid && classMember(code);
-     allow read: if signedIn() && (resource.data.studentUid == request.auth.uid || resource.data.teacherUid == request.auth.uid);
+     // Teachers can list all attempts for their own class; students can read only their own attempt.
+     allow read: if classTeacher(code) || (signedIn() && resource.data.studentUid == request.auth.uid);
      allow update, delete: if signedIn() && resource.data.studentUid == request.auth.uid;
     }
    }
