@@ -4,7 +4,7 @@ import { doc, onSnapshot, runTransaction, serverTimestamp, setDoc, updateDoc } f
 import { auth, db, firebaseReady, onAuthStateChanged, signInAnonymously } from "./firebase";
 import { makeQuestion } from "./questions";
 import "./style.css";
-import TeacherDashboard from "./teacher";
+import TeacherDashboard, { StudentJoin } from "./teacher";
 
 const ROUND_SECONDS = 25;
 const MAX_PLAYERS = 30;
@@ -147,7 +147,7 @@ function App() {
   const [name, setName] = useState("Ойыншы");
   const [grade, setGrade] = useState("5");
   const [mode, setMode] = useState("solo");
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(new URLSearchParams(window.location.search).get("room") || "");
   const [roomCode, setRoomCode] = useState("");
   const [room, setRoom] = useState(null);
   const [demo, setDemo] = useState(false);
@@ -220,6 +220,9 @@ function App() {
     });
     setDemo(false); setRoomCode(id); setRoom(null); setFeedback("");
   }, [authReady, code, name, uid]);
+
+  const autoJoined = useRef(false);
+  useEffect(() => { const requestedRoom=new URLSearchParams(window.location.search).get("room"); if(requestedRoom&&authReady&&uid&&!autoJoined.current){autoJoined.current=true;setCode(requestedRoom.toUpperCase());setTimeout(()=>startAction(joinRoom),0);} },[authReady,uid,joinRoom]);
 
   const startRound = useCallback(async () => {
     if (!room || !host || busy) return;
@@ -409,5 +412,7 @@ function App() {
   </div>;
 }
 const root = createRoot(document.getElementById("root"));
-if (window.location.pathname === "/teacher" || new URLSearchParams(window.location.search).get("teacher") === "1") root.render(<TeacherDashboard />);
+const params=new URLSearchParams(window.location.search);
+if (window.location.pathname === "/teacher" || params.get("teacher") === "1") root.render(<TeacherDashboard />);
+else if (params.get("student") === "1") root.render(<StudentJoin />);
 else root.render(<App />);
