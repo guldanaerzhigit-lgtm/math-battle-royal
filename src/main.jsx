@@ -110,7 +110,7 @@ function App(){
    </div><div className="zone-ring"/></div>
    <div className="arena-controls"><div className="move-pad"><button onClick={()=>move(0,-4)}>▲</button><div><button onClick={()=>move(-4,0)}>◀</button><button onClick={()=>move(0,4)}>▼</button><button onClick={()=>move(4,0)}>▶</button></div></div><p>ҚОЗҒАЛУ: WASD / ← ↑ ↓ →</p></div>
    <div className="counts">👥 {players.length}/30 ҚАТЫСУШЫ <span>🛡️ {alive.length} ТІРІ ҚАЛДЫ</span></div>
-   {room.status==="lobby"&&<div className="lobby"><h3>Ойыншылар жиналуда</h3><p>Бөлме кодын достарыңа жібер. Мұғалім ойынды бастай алады.</p><button className="primary" onClick={()=>startRound(0)}>▶ БИТВАНЫ БАСТАУ</button></div>}
+   {room.status==="lobby"&&<div className="lobby"><h3>Ойыншылар жиналуда</h3><p>Бөлме кодын достарыңа жібер. Мұғалім ойынды бастай алады.</p>{isHost?<button className="primary" onClick={()=>startRound(0)}>▶ БИТВАНЫ БАСТАУ</button>:<p>Мұғалім ойын бастырғанша күте тұр.</p>}</div>}
    {room.status==="intermission"&&isHost&&<button className="primary next-round" onClick={()=>startRound(round+1)}>КЕЛЕСІ РАУНД →</button>}
   </section>
   <aside className="panel"><div className="round">РАУНД {(room.round??round)+1}<b>⏱ {seconds}с</b></div>
