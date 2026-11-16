@@ -70,3 +70,17 @@ footer{min-height:48px;border-top:1px solid #ffffff16;display:flex;justify-conte
 @media(max-width:520px){.teacher-nav-link{font-size:7px;letter-spacing:.2px}.connection{display:none}}
 
 .student-join-panel{max-width:560px}.student-join-form{display:grid;gap:16px}.student-join-form label{display:grid;gap:8px;color:#a9bad5;font-size:11px;font-weight:800}.student-join-form input{height:48px;border:1px solid #ffffff25;border-radius:10px;background:#0c1930;color:white;padding:0 14px}.student-code-input{text-transform:uppercase;letter-spacing:5px;font-size:20px!important;font-weight:900}.student-join-form button,.student-tournament-link{display:flex;align-items:center;justify-content:center;min-height:48px;border:0;border-radius:10px;background:linear-gradient(110deg,#ffcf68,#f59e43);color:#172238;font-weight:900;text-decoration:none}.student-tournament-link{padding:12px;margin-top:16px}.teacher-tournament{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:20px;padding:16px;border:1px solid #ffcf6840;border-radius:12px;background:#ffcf6810}.teacher-tournament small{color:#ffcf68;font-size:9px;font-weight:900}.teacher-tournament h3{margin:6px 0;font-size:16px}.teacher-tournament p{margin:0;color:#91a7c9;font-size:10px}.teacher-tournament button{padding:12px;border:0;border-radius:8px;background:#ffcf68;color:#172238;font-size:9px;font-weight:900}.teacher-code-box a{color:#ffcf68;text-decoration:none;font-size:11px;font-weight:900}@media(max-width:520px){.teacher-tournament{align-items:flex-start;flex-direction:column}.teacher-tournament button{width:100%}}
+
+
+.teacher-edit-form{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:9px;align-items:end;margin:16px 0;padding:13px;border:1px solid #ffffff16;border-radius:12px;background:#0c193055}
+.teacher-edit-form label{display:grid;gap:7px;color:#93a7c9;font-size:9px;font-weight:900;letter-spacing:.8px}
+.teacher-edit-form input,.teacher-edit-form select,.teacher-roster-tools input{width:100%;min-width:0;height:40px;padding:0 11px;border:1px solid #ffffff20;border-radius:8px;background:#0c1930;color:#fff;font-size:11px}
+.teacher-edit-form button,.teacher-roster-tools button{height:40px;padding:0 12px;border:0;border-radius:8px;background:#2c496a;color:#ffcf68;font-size:9px;font-weight:900;white-space:nowrap}
+.teacher-edit-form button:disabled,.teacher-roster-tools button:disabled{opacity:.5}
+.teacher-roster-tools{display:flex;gap:8px;margin:12px 0}
+.teacher-roster-tools input{flex:1}
+.teacher-analytics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:16px 0}
+.teacher-analytics>div{padding:13px 10px;border:1px solid #ffffff18;border-radius:10px;background:#0c1930;text-align:center}
+.teacher-analytics small{display:block;color:#8fa4c7;font-size:8px;font-weight:900;letter-spacing:.8px}
+.teacher-analytics b{display:block;margin-top:7px;color:#ffcf68;font:20px 'Russo One',sans-serif}
+@media(max-width:520px){.teacher-edit-form{grid-template-columns:1fr 94px}.teacher-edit-form button{grid-column:1/-1}.teacher-roster-tools button{padding:0 8px;font-size:8px}}
