@@ -4,6 +4,7 @@ import { doc, onSnapshot, runTransaction, serverTimestamp, setDoc, updateDoc } f
 import { auth, db, firebaseReady, onAuthStateChanged, signInAnonymously } from "./firebase";
 import { makeQuestion } from "./questions";
 import "./style.css";
+import TeacherDashboard from "./teacher";
 
 const ROUND_SECONDS = 25;
 const MAX_PLAYERS = 30;
@@ -407,4 +408,6 @@ function App() {
     <footer><span>© 2026 MATH BATTLE ROYALE</span><span>THINK FAST · STAY ALIVE</span></footer>
   </div>;
 }
-createRoot(document.getElementById("root")).render(<App />);
+const root = createRoot(document.getElementById("root"));
+if (window.location.pathname === "/teacher" || new URLSearchParams(window.location.search).get("teacher") === "1") root.render(<TeacherDashboard />);
+else root.render(<App />);
