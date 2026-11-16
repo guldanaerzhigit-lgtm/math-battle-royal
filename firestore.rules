@@ -1,20 +1,30 @@
 rules_version = '2';
 service cloud.firestore {
-  match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    function isTeacher(teacherId) { return signedIn() && request.auth.uid == teacherId; }
-    match /teachers/{teacherId}/classes/{classId} {
-      allow read, create, update, delete: if isTeacher(teacherId);
-      match /students/{studentId} {
-        allow read, create, update, delete: if isTeacher(teacherId);
-      }
-    }
-    match /rooms/{roomId} {
-      allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid && request.resource.data.maxPlayers <= 30;
-      // Prototype game writes remain permissive; validate scores and answers on a trusted server before public tournaments.
-      allow update: if signedIn();
-      allow delete: if signedIn() && resource.data.hostUid == request.auth.uid;
-    }
+ match /databases/{database}/documents {
+  function signedIn(){return request.auth != null;}
+  function teacher(t){return signedIn() && request.auth.uid == t;}
+  match /classCodes/{code} {
+   allow read: if signedIn();
+   allow create, update: if signedIn() && request.resource.data.teacherUid == request.auth.uid;
+   allow delete: if signedIn() && resource.data.teacherUid == request.auth.uid;
   }
+  match /classPublic/{code} {
+   allow read: if signedIn();
+   allow create, update: if signedIn() && request.resource.data.teacherUid == request.auth.uid;
+   allow delete: if signedIn() && resource.data.teacherUid == request.auth.uid;
+  }
+  match /teachers/{t}/classes/{c} {
+   allow read, create, update, delete: if teacher(t);
+   match /students/{s} {
+    allow read, update, delete: if teacher(t);
+    allow create: if teacher(t) || (signedIn() && request.auth.uid == s && request.resource.data.joinCode is string && get(/databases/$(database)/documents/classCodes/$(request.resource.data.joinCode)).data.teacherUid == t && get(/databases/$(database)/documents/classCodes/$(request.resource.data.joinCode)).data.classId == c);
+   }
+  }
+  match /rooms/{roomId} {
+   allow read: if signedIn();
+   allow create: if signedIn() && request.resource.data.hostUid == request.auth.uid && request.resource.data.maxPlayers <= 30;
+   allow update: if signedIn();
+   allow delete: if signedIn() && resource.data.hostUid == request.auth.uid;
+  }
+ }
 }
