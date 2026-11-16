@@ -1,30 +1,64 @@
 # Math Battle Royale
 
-A React + Vite 2.5D mathematics battle game for grades 5–6.
+Math Battle Royale — браузерная математическая игра для 5–9 классов на React, Vite и Firebase.
 
-## Arena features
-- Multiplayer rooms with a 5-character join code; up to 30 participants.
-- SOLO and TEAM room modes.
-- 2.5D floating island arena with animated player avatars.
-- Each player moves their own character with **WASD**, **arrow keys**, or the on-screen directional pad.
-- Live character positions, health hearts, player names and team colors are synchronized through Firestore.
-- Three lives, answer scoring, leaderboard and elimination state.
-- At the end of a round, the host resolves unanswered players; players who lose all lives are eliminated.
-- When one player remains, the arena declares the champion and shows a winner screen.
-- Local demo mode includes sample opponents so the arena can be tested without Firebase.
+## Игровые режимы
 
-## Local setup
-1. Install Node.js 20+.
-2. Run `npm install`.
-3. Copy `.env.example` to `.env` and add Firebase Web App settings.
-4. Enable **Authentication → Anonymous** and create **Cloud Firestore** in Firebase.
-5. Publish `firestore.rules` in Firestore Rules.
-6. Run `npm run dev`.
+### Тренировка с ботами
+Работает без Firebase. Игрок сражается с восемью ботами: они двигаются по арене, отвечают на задания, получают и теряют жизни, атакуют соперников и стараются оставаться в безопасной зоне.
 
-Without Firebase config the demo mode runs locally. Online rooms require Firebase.
+### Онлайн SOLO / TEAM
+Создайте комнату, отправьте пятизначный код другим игрокам и начните матч. Поддерживается до 30 участников. В TEAM участники автоматически распределяются между синей и красной командами.
 
-## Cloudflare Pages
-Connect this GitHub repository to Cloudflare Pages. Framework: Vite. Build command: `npm run build`. Output directory: `dist`. Add each `VITE_FIREBASE_*` variable in Pages → Settings → Environment variables, then redeploy. Add the Pages domain to Firebase Authentication → Authorized domains.
+## Игровой цикл
 
-## Important MVP / production note
-This is an interactive MVP. Firestore room documents currently contain client-updated player positions and game state. The current rules are permissive for prototyping and are **not safe for a public competitive tournament**. Before public release, move room membership, authoritative round deadlines, answer validation, elimination and score updates into trusted Cloud Functions or Cloudflare Workers/Durable Objects. Add rate limits and strict per-player authorization. The client-side countdown is a display; the host currently triggers round resolution.
+- Раунд длится 25 секунд.
+- Для каждого класса с 5-го по 9-й подготовлен отдельный банк математических вопросов.
+- Верный ответ даёт 100 XP и наносит урон ближайшему сопернику в радиусе атаки.
+- Неверный ответ отнимает одну жизнь.
+- Игрок, не ответивший до конца раунда, теряет одну жизнь.
+- После раунда безопасная зона уменьшается. Игроки за её пределами теряют дополнительную жизнь.
+- У каждого участника три жизни. В SOLO побеждает последний выживший; в TEAM — команда, у которой остались участники.
+- Есть таблица лидеров, таймер, отображение жизней и кнопки управления для сенсорных экранов.
+
+## Локальный запуск
+
+Требуется Node.js 20 или новее.
+
+```bash
+npm install
+npm run dev
+```
+
+Сборка:
+
+```bash
+npm run build
+npm run preview
+```
+
+Кнопка «БОТТАРМЕН ЖАТТЫҒУ» запускает локальный режим без настройки Firebase.
+
+## Firebase для онлайн-комнат
+
+В `src/firebase.js` указаны параметры Firebase Web App. Чтобы включить онлайн-матчи:
+
+1. В Firebase Console включите Authentication → Anonymous.
+2. Создайте Cloud Firestore database.
+3. Опубликуйте правила из `firestore.rules`.
+4. Добавьте домен развернутого сайта в Firebase Authentication → Authorized domains.
+
+При необходимости параметры проекта можно переопределить переменными `VITE_FIREBASE_*`.
+
+## Cloudflare
+
+Для Cloudflare Pages используйте:
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Node.js: 20+
+
+При подключении репозитория к Cloudflare Pages новые коммиты ветки `main` запускают новое развертывание.
+
+## Важное ограничение безопасности
+
+Эта версия — полноценный игровой MVP, но не защищённая турнирная платформа. Клиентская часть пока обновляет часть состояния матча через Firestore. Для соревнований с призами или публичного турнира необходимо перенести проверку ответов, начисление очков, урон, таймер и решение о победителе на доверенный сервер (например, Cloud Functions или Cloudflare Workers/Durable Objects), а также ужесточить Firestore Security Rules.
