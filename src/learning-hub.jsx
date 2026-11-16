@@ -285,7 +285,6 @@ export function TeacherLearningHub({ uid, selected, students=[] }) {
       </section>
     </div>}
     {(message||error)&&<div className={error?"teacher-message error":"teacher-message"}>{error||message}</div>}
-    <div className="teacher-tools-footnote">Оқушы жұмысы жеке режимде орындалады және сынып рейтингіне қосылмайды. Деректер Firebase Firestore-та сақталады.</div>
   </section>;
 }
 
