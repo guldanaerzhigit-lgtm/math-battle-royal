@@ -62,6 +62,7 @@ export function TeacherLearningHub({ uid, selected, students=[] }) {
   const [error,setError]=useState("");
   const [reportId,setReportId]=useState("");
   const [attempts,setAttempts]=useState([]);
+   const [classAttempts,setClassAttempts]=useState([]);
   const [rooms,setRooms]=useState([]);
   const [loadingReport,setLoadingReport]=useState(false);
   const [topicFilter,setTopicFilter]=useState("all");
@@ -90,6 +91,14 @@ export function TeacherLearningHub({ uid, selected, students=[] }) {
     return ()=>{alive=false;};
   },[tab,selected?.id]);
   useEffect(()=>{
+    if(tab!=="analytics"||!selected?.joinCode||!db){setClassAttempts([]);return;}
+    let alive=true;
+    Promise.all(assignments.map(a=>getDocs(collection(db,"classPublic",selected.joinCode,"assignments",a.id,"attempts"))))
+      .then(snaps=>{if(alive)setClassAttempts(snaps.flatMap(s=>s.docs.map(d=>({id:d.id,...d.data()}))));})
+      .catch(e=>{if(alive)setError("Сынып аналитикасын жүктеу қатесі: "+e.message);});
+    return ()=>{alive=false;};
+  },[tab,selected?.joinCode,assignments]);
+  useEffect(()=>{
     if(tab!=="analytics"||!reportId||!selected?.joinCode||!db){setAttempts([]);return;}
     let alive=true;setLoadingReport(true);
     getDocs(collection(db,"classPublic",selected.joinCode,"assignments",reportId,"attempts"))
@@ -101,6 +110,9 @@ export function TeacherLearningHub({ uid, selected, students=[] }) {
 
   const topics=useMemo(()=>[...new Set(questions.map(q=>q.topic||"Жалпы"))].sort((a,b)=>a.localeCompare(b,"kk")),[questions]);
   const visibleQuestions=useMemo(()=>questions.filter(q=>(topicFilter==="all"||q.topic===topicFilter)&&(!search||q.q.toLocaleLowerCase("kk").includes(search.toLocaleLowerCase("kk")))),[questions,topicFilter,search]);
+  const classCorrect=classAttempts.reduce((n,a)=>n+(a.correctCount||0),0);
+  const classTotal=classAttempts.reduce((n,a)=>n+(a.total||0),0);
+  const classAverage=classAttempts.length?Math.round(classAttempts.reduce((n,a)=>n+(a.percent||0),0)/classAttempts.length):0;
   const correctTotal=attempts.reduce((n,a)=>n+(a.correctCount||0),0);
   const answerTotal=attempts.reduce((n,a)=>n+(a.total||0),0);
   const average=attempts.length?Math.round(attempts.reduce((n,a)=>n+(a.percent||0),0)/attempts.length):0;
@@ -263,7 +275,7 @@ export function TeacherLearningHub({ uid, selected, students=[] }) {
       <section className="teacher-panel">
         <div className="teacher-panel-title"><div><small>ОҚУ НӘТИЖЕЛЕРІ</small><h2>Автоматты есеп</h2></div><button className="teacher-export-xlsx" onClick={exportReport} disabled={busy}>{busy?"Дайындалуда...":"↓ Excel есебі"}</button></div>
         <label className="teacher-report-select">Тапсырманы таңдау<select value={reportId} onChange={e=>setReportId(e.target.value)}>{assignments.map(a=><option key={a.id} value={a.id}>{a.title}</option>)}</select></label>
-        <div className="teacher-analytics teacher-analytics-expanded"><div><small>ЖҰМЫС ОРЫНДАЛДЫ</small><b>{attempts.length}</b></div><div><small>ОРТАША НӘТИЖЕ</small><b>{average}%</b></div><div><small>ДҰРЫС ЖАУАП</small><b>{correctTotal}/{answerTotal}</b></div></div>
+        <div className="teacher-analytics teacher-analytics-expanded"><div><small>БАРЛЫҚ ОРЫНДАЛҒАН ЖҰМЫС</small><b>{classAttempts.length}</b></div><div><small>СЫНЫП ОРТАШАСЫ</small><b>{classAverage}%</b></div><div><small>ДҰРЫС ЖАУАП</small><b>{classCorrect}/{classTotal}</b></div></div><p className="teacher-hint">Төменде таңдалған тапсырманың жеке нәтижелері көрсетіледі: {average}% орташа.</p>
         {loadingReport?<div className="teacher-empty">Нәтижелер жүктелуде...</div>:<div className="teacher-report-table">{attempts.length?attempts.map(a=><article key={a.id}><b>{a.studentName||"Оқушы"}</b><span>{a.correctCount||0}/{a.total||0} дұрыс · {a.percent||0}%</span></article>):<div className="teacher-empty">Бұл тапсырма бойынша әзірге нәтиже жоқ.</div>}</div>}
         <div className="teacher-weak-topics"><h3>Қиындық туғызған тақырыптар</h3>{weakTopics.length?weakTopics.map(([topic,count])=><div key={topic}><span>{topic}</span><b>{count} қате</b></div>):<p>Қателер жиналған соң тақырыптар осы жерде көрсетіледі.</p>}</div>
       </section>
@@ -287,6 +299,7 @@ export function StudentAssignments({ joinCode, uid, studentName }) {
   const [results,setResults]=useState([]);
   const [seconds,setSeconds]=useState(45);
   const [showHint,setShowHint]=useState(false);
+   const [showTutor,setShowTutor]=useState(false);
   const [complete,setComplete]=useState(false);
   const [summary,setSummary]=useState(null);
   const [error,setError]=useState("");
@@ -308,7 +321,7 @@ export function StudentAssignments({ joinCode, uid, studentName }) {
 
   function start(a){
     if(!a.questions?.length){setError("Бұл тапсырмада сұрақтар жоқ.");return;}
-    setActive(a);setCurrentIndex(0);setRemaining(a.questions.map((q,i)=>i).slice(1));setTargetLevel(2);setResponse(null);setResults([]);setComplete(false);setSummary(null);setShowHint(false);setSeconds(Math.round(45*Number(a.settings?.extraTime||1)));setStartedAt(Date.now());setError("");
+    setActive(a);setCurrentIndex(0);setRemaining(a.questions.map((q,i)=>i).slice(1));setTargetLevel(2);setResponse(null);setResults([]);setComplete(false);setSummary(null);setShowHint(false);setShowTutor(false);setSeconds(Math.round(45*Number(a.settings?.extraTime||1)));setStartedAt(Date.now());setError("");
   }
   function recordAnswer(optionIndex){
     if(response||!question)return;
@@ -352,7 +365,7 @@ export function StudentAssignments({ joinCode, uid, studentName }) {
     if(active.settings?.adaptive!==false){
       chosen=remaining.slice().sort((a,b)=>Math.abs(difficultyValue(questions[a].difficulty)-targetLevel)-Math.abs(difficultyValue(questions[b].difficulty)-targetLevel))[0];
     }
-    setRemaining(old=>old.filter(i=>i!==chosen));setCurrentIndex(chosen);setResponse(null);setShowHint(false);setSeconds(timeLimit);
+    setRemaining(old=>old.filter(i=>i!==chosen));setCurrentIndex(chosen);setResponse(null);setShowHint(false);setShowTutor(false);setSeconds(timeLimit);
   }
 
   if(active&&!complete&&question)return <section className="student-assignment-player">
@@ -362,7 +375,7 @@ export function StudentAssignments({ joinCode, uid, studentName }) {
       {active.settings?.visualHints&&question.visualHint&&<div className="student-visual-hint">🧩 {question.visualHint}</div>}
       <div className="student-answer-options">{(question.options||[]).map((option,i)=><button key={i} disabled={Boolean(response)} className={response?(i===question.answerIndex?"correct":i===response.selectedIndex?"incorrect":""):""} onClick={()=>recordAnswer(i)}><b>{["A","B","C","D"][i]}</b>{option}</button>)}</div>
       {!response&&active.settings?.hints&&question.hint&&<button className="student-hint-button" onClick={()=>setShowHint(v=>!v)}>💡 {showHint?"Подсказканы жасыру":"Подсказка алу"}</button>}
-      {showHint&&!response&&<div className="student-hint-box">{question.hint}</div>}
+      {showHint&&!response&&<div className="student-hint-box">{question.hint}</div>}{!response&&<button className="student-hint-button ai-tutor-button" onClick={()=>setShowTutor(v=>!v)}>🤖 {showTutor?"Көмекшіні жасыру":"Math көмекшіден көмек алу"}</button>}{showTutor&&!response&&<div className="student-ai-tutor"><b>🤖 Math көмекші</b><p>{question.hint||"Алдымен есептің шартын мұқият оқып, қандай амал қолдану керегін анықта."}</p>{question.solution&&<details><summary>Қадамдық түсіндіру</summary><p>{question.solution}</p></details>}<small>Көмекші мұғалім енгізген ишаралар мен шешімге сүйенеді.</small></div>}
       {response&&<div className={response.correct?"student-answer-feedback correct":"student-answer-feedback incorrect"}><b>{response.correct?"Дұрыс жауап!":"Әлі де жаттығу керек."}</b>{active.settings?.solutions&&question.solution&&<p>{question.solution}</p>}{active.settings?.solutions&&<small>Дұрыс жауап: {question.options?.[question.answerIndex]}</small>}</div>}
     </div>
     {response&&<button className="teacher-tool-primary student-next-button" onClick={next} disabled={saving}>{remaining.length?"Келесі сұрақ →":saving?"Нәтиже сақталуда...":"Нәтижені аяқтау →"}</button>}
