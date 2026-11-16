@@ -26,6 +26,9 @@ export default function TeacherDashboard() {
   const [className,setClassName]=useState("");
   const [grade,setGrade]=useState("5");
   const [studentName,setStudentName]=useState("");
+  const [studentSearch,setStudentSearch]=useState("");
+  const [editingName,setEditingName]=useState("");
+  const [editingGrade,setEditingGrade]=useState("5");
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
@@ -50,6 +53,10 @@ export default function TeacherDashboard() {
     return onSnapshot(collection(db,"teachers",uid,"classes",selectedId,"students"),snap=>setStudents(snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.name||"").localeCompare(b.name||"","kk"))),e=>setError("Оқушылар тізіміндегі қате: "+e.message));
   },[uid,selectedId]);
   const selected=useMemo(()=>classes.find(x=>x.id===selectedId)||null,[classes,selectedId]);
+  useEffect(()=>{setEditingName(selected?.name||"");setEditingGrade(selected?.grade||"5");},[selectedId,selected?.name,selected?.grade]);
+  const visibleStudents=useMemo(()=>students.filter(s=>(s.name||"").toLocaleLowerCase("kk").includes(studentSearch.trim().toLocaleLowerCase("kk"))),[students,studentSearch]);
+  const roomPlayers=useMemo(()=>Object.values(activeRoom?.players||{}).sort((a,b)=>(b.score||0)-(a.score||0)),[activeRoom]);
+  const averageScore=roomPlayers.length?Math.round(roomPlayers.reduce((n,p)=>n+(p.score||0),0)/roomPlayers.length):0;
   useEffect(()=>{
     if(!selected?.activeRoomCode||!db){setActiveRoom(null);return;}
     return onSnapshot(doc(db,"rooms",selected.activeRoomCode),snap=>setActiveRoom(snap.exists()?snap.data():null),e=>setError("Турнир нәтижесін жүктеу қатесі: "+e.message));
@@ -61,6 +68,19 @@ export default function TeacherDashboard() {
     try{const joinCode=makeCode();const ref=doc(collection(db,"teachers",uid,"classes"));const classData={name:className.trim().slice(0,50),grade,teacherUid:uid,joinCode,createdAt:serverTimestamp()};await setDoc(ref,classData);await setDoc(doc(db,"classCodes",joinCode),{teacherUid:uid,classId:ref.id,className:classData.name,grade});await setDoc(doc(db,"classPublic",joinCode),{teacherUid:uid,classId:ref.id,className:classData.name,grade,activeRoomCode:null});setClassName("");setSelectedId(ref.id);setMessage("Сынып құрылды. Кодты оқушыларға жіберіңіз.");}
     catch(err){setError("Сынып құру қатесі: "+err.message);}finally{setBusy(false);}
   }
+  async function saveClassDetails(e){
+    e.preventDefault();if(!selected||!editingName.trim())return;setBusy(true);setError("");setMessage("");
+    const name=editingName.trim().slice(0,50),nextGrade=editingGrade;
+    try{await updateDoc(doc(db,"teachers",uid,"classes",selected.id),{name,grade:nextGrade});await updateDoc(doc(db,"classCodes",selected.joinCode),{className:name,grade:nextGrade});await updateDoc(doc(db,"classPublic",selected.joinCode),{className:name,grade:nextGrade});setMessage("Сынып ақпараты жаңартылды.");}
+    catch(err){setError("Сыныпты жаңарту қатесі: "+err.message);}finally{setBusy(false);}
+  }
+  function exportClassCsv(){
+    if(!selected)return;const scores=new Map(roomPlayers.map(p=>[p.uid,p.score||0]));
+    const rows=[["Оқушы","Сынып","Турнир ұпайы"],...students.map(st=>[st.name||"",selected.grade+"-сынып",scores.has(st.uid)?scores.get(st.uid):"—"])];
+    const csv="\\uFEFF"+rows.map(row=>row.map(v=>"\""+String(v).replace(/"/g,"\"\"")+"\"").join(";")).join("\\r\\n");
+    const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));const a=document.createElement("a");a.href=url;a.download=(selected.name||"class").replace(/[^a-zа-я0-9_-]/gi,"_")+"_report.csv";a.click();URL.revokeObjectURL(url);setMessage("Сынып есебі CSV форматында жүктелді.");
+  }
+
   async function addStudent(e){
     e.preventDefault();if(!studentName.trim()||!selected)return;setBusy(true);setError("");setMessage("");
     try{await addDoc(collection(db,"teachers",uid,"classes",selected.id,"students"),{name:studentName.trim().slice(0,60),createdAt:serverTimestamp(),manual:true});setStudentName("");setMessage("Оқушы қосылды.");}
@@ -102,11 +122,12 @@ export default function TeacherDashboard() {
         </section>
         <section className="teacher-panel">
           {selected?<><div className="teacher-panel-title"><div><small>СЫНЫП АҚПАРАТЫ</small><h2>{selected.name}</h2></div><span>{students.length} оқушы</span></div>
+            <form className="teacher-edit-form" onSubmit={saveClassDetails}><label>Сынып атауы<input value={editingName} onChange={e=>setEditingName(e.target.value)} maxLength={50}/></label><label>Деңгей<select value={editingGrade} onChange={e=>setEditingGrade(e.target.value)}>{["5","6","7","8","9"].map(g=><option key={g} value={g}>{g}-сынып</option>)}</select></label><button disabled={busy||!editingName.trim()}>Өзгерістерді сақтау</button></form>
             <div className="teacher-code-box"><div><small>СЫНЫП КОДЫ</small><b>{selected.joinCode}</b></div><button onClick={copyCode}>▣ Көшіру</button></div>
             <p className="teacher-hint">Оқушылар /?student=1 бетіне кіріп, осы 6 таңбалы кодпен тіркеле алады.</p>
             <form className="teacher-add-form" onSubmit={addStudent}><input value={studentName} onChange={e=>setStudentName(e.target.value)} placeholder="Оқушының аты-жөні" maxLength={60}/><button disabled={busy||!studentName.trim()}>＋ Қосу</button></form>
-            <div className="teacher-roster">{students.length?students.map((s,i)=><div className="teacher-student" key={s.id}><span>{String(i+1).padStart(2,"0")}</span><b>{s.name}</b><button aria-label="Оқушыны өшіру" onClick={()=>removeStudent(s.id)}>×</button></div>):<div className="teacher-empty">Бұл сыныпта әзірге оқушы жоқ.</div>}</div>
-            <div className="teacher-tournament"><div><small>ТУРНИР</small><h3>{selected.activeRoomCode?"Турнир бөлмесі ашық":"Сынып турнирі"}</h3><p>{activeRoom?Object.values(activeRoom.players||{}).length+" ойыншы · "+activeRoom.status:"Оқушылармен жарысты бастаңыз."}</p></div><button onClick={startTournament} disabled={busy||!students.length}>⚔ ТУРНИР БАСТАУ</button></div>{activeRoom&&<><div className="teacher-code-box"><div><small>ОЙЫН БӨЛМЕСІНІҢ КОДЫ</small><b>{selected.activeRoomCode}</b></div><a href={"/?room="+selected.activeRoomCode}>Ойынға өту →</a></div><div className="teacher-roster">{Object.values(activeRoom.players||{}).sort((a,b)=>b.score-a.score).map((p,i)=><div className="teacher-student" key={p.uid}><span>{String(i+1).padStart(2,"0")}</span><b>{p.name}</b><strong>{p.score} XP</strong></div>)}</div></>}<button className="teacher-delete-class" disabled={busy} onClick={removeClass}>Сыныпты жою</button>
+            <div className="teacher-roster-tools"><input value={studentSearch} onChange={e=>setStudentSearch(e.target.value)} placeholder="Оқушыны іздеу..." aria-label="Оқушыны іздеу"/><button type="button" onClick={exportClassCsv} disabled={!students.length}>↓ CSV есебі</button></div><div className="teacher-roster">{visibleStudents.length?visibleStudents.map((s,i)=><div className="teacher-student" key={s.id}><span>{String(i+1).padStart(2,"0")}</span><b>{s.name}</b><button aria-label="Оқушыны өшіру" onClick={()=>removeStudent(s.id)}>×</button></div>):<div className="teacher-empty">{students.length?"Іздеу бойынша оқушы табылмады.":"Бұл сыныпта әзірге оқушы жоқ."}</div>}</div>
+            <div className="teacher-tournament"><div><small>ТУРНИР</small><h3>{selected.activeRoomCode?"Турнир бөлмесі ашық":"Сынып турнирі"}</h3><p>{activeRoom?Object.values(activeRoom.players||{}).length+" ойыншы · "+activeRoom.status:"Оқушылармен жарысты бастаңыз."}</p></div><button onClick={startTournament} disabled={busy||!students.length}>⚔ ТУРНИР БАСТАУ</button></div>{activeRoom&&<><div className="teacher-analytics"><div><small>ҚАТЫСУШЫЛАР</small><b>{roomPlayers.length}</b></div><div><small>ОРТАША ҰПАЙ</small><b>{averageScore} XP</b></div><div><small>РАУНД</small><b>{Math.max(0,(activeRoom.round??-1)+1)}</b></div></div><div className="teacher-code-box"><div><small>ОЙЫН БӨЛМЕСІНІҢ КОДЫ</small><b>{selected.activeRoomCode}</b></div><a href={"/?room="+selected.activeRoomCode}>Ойынға өту →</a></div><div className="teacher-roster">{roomPlayers.map((p,i)=><div className="teacher-student" key={p.uid}><span>{String(i+1).padStart(2,"0")}</span><b>{p.name}</b><strong>{p.score} XP</strong></div>)}</div></>}<button className="teacher-delete-class" disabled={busy} onClick={removeClass}>Сыныпты жою</button>
           </>:<div className="teacher-empty teacher-no-selection">Сыныпты таңдаңыз немесе жаңасын құрыңыз.</div>}
         </section>
       </div>
