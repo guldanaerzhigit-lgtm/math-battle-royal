@@ -190,3 +190,23 @@ footer{min-height:48px;border-top:1px solid #ffffff16;display:flex;justify-conte
 .student-result-recommendation small{font-size:9px;color:#9baecc}
 @media(max-width:760px){.teacher-tools-panel{padding:15px;margin-top:15px}.teacher-tools-grid,.teacher-analytics-area{grid-template-columns:1fr}.teacher-tools-heading{flex-direction:column}.teacher-tools-tabs button{flex:1;padding:10px 8px;font-size:8px}.student-assignment-list,.student-assignment-player{margin:15px 0;padding:15px}.student-assignment-top{flex-direction:column}.student-assignment-list>article{align-items:flex-start}}
 @media(max-width:440px){.teacher-bank-filters{grid-template-columns:1fr}.teacher-option-grid,.student-answer-options{grid-template-columns:1fr}.teacher-form-row{grid-template-columns:1fr 1fr}.teacher-assignment-settings label:last-child{grid-template-columns:1fr}.student-assignment-list>article{flex-direction:column}.student-assignment-list>article button{width:100%}}
+
+/* Teacher email / invitation access */
+.teacher-auth-bar{max-width:1180px;margin:10px auto;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;color:#9fb1ce;font-size:10px}
+.teacher-auth-bar button,.teacher-auth-secondary,.teacher-auth-link{border:1px solid #ffffff24;border-radius:8px;background:#213654;color:#ffcf68;padding:10px 13px;font-size:10px;font-weight:800;cursor:pointer}
+.teacher-auth-panel{max-width:520px;margin:35px auto;padding:28px}
+.teacher-auth-panel h1{font:clamp(22px,4vw,30px) 'Russo One',sans-serif;margin:10px 0}
+.teacher-auth-panel p{color:#9fb1ce;font-size:11px;line-height:1.6}
+.teacher-auth-kicker{color:#ffcf68;font-size:9px;font-weight:900;letter-spacing:1.4px}
+.teacher-auth-form{display:grid;gap:13px;margin-top:20px}
+.teacher-auth-form label{display:grid;gap:7px;color:#aabbd5;font-size:10px;font-weight:800}
+.teacher-auth-form input,.teacher-invite-panel input{height:43px;min-width:0;padding:0 12px;border:1px solid #ffffff24;border-radius:8px;background:#0b1930;color:white}
+.teacher-auth-primary,.teacher-auth-google{width:100%;min-height:44px;border:0;border-radius:9px;background:linear-gradient(110deg,#ffcf68,#f49c45);color:#172238;font-size:10px;font-weight:900;cursor:pointer}
+.teacher-auth-google{margin-top:12px;background:#263f60;color:#fff;border:1px solid #ffffff24}
+.teacher-auth-link{display:block;margin:12px auto;background:transparent;border:0}
+.teacher-auth-divider{text-align:center;color:#7286a9;font-size:9px;margin:17px 0 3px}
+.teacher-invite-panel{max-width:1180px;margin:12px auto;padding:16px;background:#142743;border:1px solid #ffcf6844;border-radius:12px}
+.teacher-invite-panel h2{font-size:16px;margin:0 0 6px}.teacher-invite-panel p{font-size:10px;color:#9fb1ce}
+.teacher-invite-panel form{display:grid;grid-template-columns:1.2fr 1fr auto;gap:8px}
+.teacher-invite-panel button{border:0;border-radius:8px;background:#ffcf68;color:#172238;padding:0 14px;font-size:10px;font-weight:900}
+@media(max-width:650px){.teacher-invite-panel form{grid-template-columns:1fr}.teacher-invite-panel button{min-height:42px}.teacher-auth-panel{margin:20px 0;padding:20px}}
