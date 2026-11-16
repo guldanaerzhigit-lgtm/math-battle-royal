@@ -77,7 +77,7 @@ export default function TeacherDashboard() {
   function exportClassCsv(){
     if(!selected)return;const scores=new Map(roomPlayers.map(p=>[p.uid,p.score||0]));
     const rows=[["Оқушы","Сынып","Турнир ұпайы"],...students.map(st=>[st.name||"",selected.grade+"-сынып",scores.has(st.uid)?scores.get(st.uid):"—"])];
-    const csv="\\uFEFF"+rows.map(row=>row.map(v=>"\""+String(v).replace(/"/g,"\"\"")+"\"").join(";")).join("\\r\\n");
+    const csv="\uFEFF"+rows.map(row=>row.map(v=>"\""+String(v).replace(/"/g,"\"\"")+"\"").join(";")).join("\r\n");
     const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8;"}));const a=document.createElement("a");a.href=url;a.download=(selected.name||"class").replace(/[^a-zа-я0-9_-]/gi,"_")+"_report.csv";a.click();URL.revokeObjectURL(url);setMessage("Сынып есебі CSV форматында жүктелді.");
   }
 
