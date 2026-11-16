@@ -25,7 +25,7 @@ function App(){
  const[name,setName]=useState("Ойыншы"),[mode,setMode]=useState("solo"),[code,setCode]=useState(""),[roomCode,setRoomCode]=useState(""),[room,setRoom]=useState(null);
  const[round,setRound]=useState(0),[answer,setAnswer]=useState(false),[msg,setMsg]=useState(""),[seconds,setSeconds]=useState(25),[busy,setBusy]=useState(false);
  useEffect(()=>{if(firebaseReady){signInAnonymously(auth).catch(console.error);return onAuthStateChanged(auth,u=>u&&setUid(u.uid));}},[]);
- useEffect(()=>{if(!roomCode||!firebaseReady||roomCode==="DEMO")return onSnapshot(doc(db,"rooms",roomCode),s=>setRoom(s.exists()?s.data():null));},[roomCode]);
+ useEffect(()=>{if(!roomCode||!firebaseReady||roomCode==="DEMO")return;return onSnapshot(doc(db,"rooms",roomCode),s=>setRoom(s.exists()?s.data():null),e=>{console.error("Room subscription failed:",e);setMsg("Бөлмеге қосылу қатесі: "+e.message);});},[roomCode]);
  const players=useMemo(()=>Object.values(room?.players||{}),[room]);
  const onlineRoom=firebaseReady&&roomCode!=="DEMO";
  const me=room?.players?.[uid],alive=players.filter(p=>p.alive),q=room?.question,isHost=room?.hostUid===uid;
