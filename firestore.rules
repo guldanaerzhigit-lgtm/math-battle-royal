@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  match /rooms/{roomId} {
+   allow read: if request.auth != null;
+   allow create: if request.auth != null && request.resource.data.hostUid == request.auth.uid && request.resource.data.maxPlayers <= 30;
+   // Prototype rules only. Enforce answers, timers and scores on a trusted server before public competition.
+   allow update: if request.auth != null;
+   allow delete: if request.auth != null && resource.data.hostUid == request.auth.uid;
+  }
+ }
+}
