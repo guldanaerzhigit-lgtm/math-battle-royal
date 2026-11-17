@@ -75,8 +75,7 @@ export default function TeacherAccess(){
   const adminSnap=await getDoc(doc(db,"admins",u.uid));
   if(adminSnap.exists()){
    const existing=await getDoc(doc(db,"teacherProfiles",u.uid));
-   if(!existing.exists())await setDoc(doc(db,"teacherProfiles",u.uid),{uid:u.uid,email:u.email,name:u.displayName||"Әкімші",role:"admin",status:"active",createdAt:serverTimestamp()});
-   setProfile(existing.exists()?existing.data():{role:"admin",status:"active"});
+   setProfile(existing.exists()?existing.data():{uid:u.uid,email:u.email,name:u.displayName||"Әкімші",role:"admin",status:"active"});
    setIsAdmin(true);setMessage("Әкімші ретінде сәтті кірдіңіз.");return;
   }
   const key=invitePath(u.email||"");
@@ -156,7 +155,7 @@ export default function TeacherAccess(){
    const name=profileName.trim();
    if(!name)throw new Error("Аты-жөніңізді енгізіңіз.");
    await updateProfile(user,{displayName:name});
-   await updateDoc(doc(db,"teacherProfiles",user.uid),{name});
+   if(!isAdmin)await updateDoc(doc(db,"teacherProfiles",user.uid),{name});
    setProfile(p=>({...p,name}));setMessage("Профиль жаңартылды.");
   }catch(e){setError(e.message||"Профильді сақтау қатесі.");}
   finally{setBusy(false);}
